@@ -104,6 +104,23 @@ class DatabaseManager:
             cursor = self.conn.execute("SELECT url FROM links WHERE visited = FALSE")
             return cursor.fetchall()
 
+    def reset_links_missing_pages(self) -> int:
+        """
+        Reset visited flag to FALSE for links that have no corresponding page entry.
+        Returns the number of links that were reset.
+        """
+        with self.conn:
+            cursor = self.conn.execute(
+                "SELECT COUNT(*) FROM links WHERE url NOT IN (SELECT url FROM pages)"
+            )
+            n = cursor.fetchone()[0]
+            if n > 0:
+                self.conn.execute(
+                    "UPDATE links SET visited = FALSE WHERE url NOT IN (SELECT url FROM pages)"
+                )
+            logger.info(f"Reset {n} links (visited=True) that had no saved page")
+            return n
+
     def get_links_count(self) -> int:
         """
         Retrieve the total number of links in the 'links' table.

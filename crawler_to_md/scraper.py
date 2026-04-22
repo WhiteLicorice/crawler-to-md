@@ -6,6 +6,11 @@ import time
 from typing import Any
 from urllib.parse import urldefrag, urljoin
 
+try:
+    import cloudscraper
+except Exception:
+    cloudscraper = None
+
 import requests
 from requests.cookies import create_cookie
 from bs4 import BeautifulSoup, Tag
@@ -71,7 +76,27 @@ class Scraper:
         self.db_manager = db_manager
         self.rate_limit = rate_limit
         self.delay = delay
-        self.session = requests.Session()
+        # Prefer cloudscraper to bypass Cloudflare JS challenges; fall back to requests.Session
+        if cloudscraper is not None:
+            try:
+                self.session = cloudscraper.create_scraper()
+                logger.info("Using cloudscraper session to bypass Cloudflare")
+            except Exception:
+                self.session = requests.Session()
+                logger.debug("cloudscraper.create_scraper() failed; falling back to requests.Session")
+        else:
+            logger.error("cloudscraper library not found; install it to bypass Cloudflare protections")
+            self.session = requests.Session()
+
+        # Set sensible default headers to mimic a real browser
+        self.session.headers.update({
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            ),
+            "Accept-Language": "en-US,en;q=0.9",
+        })
+
         if proxy:
             self.session.proxies.update({"http": proxy, "https": proxy})
         self.proxy = proxy
@@ -324,6 +349,14 @@ class Scraper:
         # Log the start of the scraping process
         logger.info("Starting scraping process")
 
+        # Requeue links that were marked visited but never saved to pages (e.g., earlier run failed)
+        try:
+            requeued = self.db_manager.reset_links_missing_pages()
+            if requeued:
+                logger.info("Requeued %d links that previously had no saved page", requeued)
+        except Exception:
+            logger.debug("Failed to reset missing pages in DB; continuing")
+
         # Initialize a progress bar to track scraping progress
         pbar = tqdm(
             total=self.db_manager.get_links_count(),
@@ -383,11 +416,11 @@ class Scraper:
                 if response.status_code != 200 or not response.headers.get(
                     "content-type", ""
                 ).startswith("text/html"):
-                    # Mark the link as visited and log the reason for skipping
-                    self.db_manager.mark_link_visited(url)
                     logger.info(
-                        "Skipping link %s due to invalid status code or content type",
+                        "Skipping link %s due to invalid status code (%s) or content type (%s)",
                         url,
+                        response.status_code,
+                        response.headers.get("content-type", ""),
                     )
                     continue
 

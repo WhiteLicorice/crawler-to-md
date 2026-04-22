@@ -35,6 +35,7 @@ dependencies = [
     "coloredlogs==15.0.1",
     "beautifulsoup4==4.13.4",
     "argcomplete==3.6.2",
+    "cloudscraper==1.2.71",
 ]
 
 [tool.setuptools_scm]
