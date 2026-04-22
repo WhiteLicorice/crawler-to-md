@@ -3,9 +3,11 @@ import json
 import os
 import tempfile
 import time
+from typing import Any
 from urllib.parse import urldefrag, urljoin
 
 import requests
+from requests.cookies import create_cookie
 from bs4 import BeautifulSoup, Tag
 from markitdown import MarkItDown
 from tqdm import tqdm
@@ -38,6 +40,7 @@ class Scraper:
         rate_limit: int = 0,
         delay: float = 0.0,
         proxy: str | None = None,
+        cookies: str | None = None,
         include_filters: list[str] | None = None,
         exclude_filters: list[str] | None = None,
     ) -> None:
@@ -52,6 +55,7 @@ class Scraper:
             rate_limit (int): Maximum number of requests per minute.
             delay (float): Delay between requests in seconds.
             proxy (str, optional): Proxy URL for HTTP or SOCKS requests.
+            cookies (str, optional): Path to a JSON cookie file (Puppeteer/Chrome export format).
             include_filters (list, optional): CSS-like selectors (#id, .class, tag)
                 of elements to include before Markdown conversion.
             exclude_filters (list, optional): CSS-like selectors (#id, .class, tag)
@@ -75,6 +79,12 @@ class Scraper:
         self.include_filters = include_filters or []
         self.exclude_filters = exclude_filters or []
 
+        # Load cookies into the session if a cookie file was provided. The file should
+        # be a JSON array of cookie objects like the Puppeteer/Chrome export format
+        # (each object containing name, value, domain, path, httpOnly, secure, ...)
+        if cookies:
+            self._load_cookies(cookies)
+
         if proxy:
             self._test_proxy()
 
@@ -89,6 +99,35 @@ class Scraper:
             self.session.head(self.base_url, timeout=5)
         except requests.RequestException as exc:
             raise ValueError(f"Proxy unreachable: {exc}") from exc
+
+    def _load_cookies(self, cookie_path: str) -> None:
+        """
+        Load cookies from a JSON file (Puppeteer/Chrome export format) and add them
+        to the session cookie jar so authenticated requests work.
+        """
+        try:
+            with open(cookie_path, "r", encoding="utf-8") as fh:
+                cookies: dict[str, Any] = json.load(fh)
+        except Exception as e:
+            logger.error(f"Could not read cookies file {cookie_path}: {e}")
+            return
+
+        count = 0
+        for c in cookies:
+            try:
+                cookie = create_cookie(
+                    name=c.get("name"),
+                    value=c.get("value", ""),
+                    domain=c.get("domain"),
+                    path=c.get("path", "/"),
+                    secure=c.get("secure", False),
+                    rest={"HttpOnly": c.get("httpOnly", False)},
+                )
+                self.session.cookies.set_cookie(cookie)
+                count += 1
+            except Exception:
+                logger.debug(f"Skipping malformed cookie: {c}")
+        logger.info(f"Loaded {count} cookies from {cookie_path}")
 
     def _find_elements(self, soup: BeautifulSoup, selector: str) -> list[Tag]:
         """

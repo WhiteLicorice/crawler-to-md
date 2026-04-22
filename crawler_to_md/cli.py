@@ -140,6 +140,12 @@ def main() -> None:
         ),
         default=[],
     )
+    parser.add_argument(
+        "--cookies",
+        help=(
+            "Path to a JSON file containing cookies to include in requests. "
+        ),
+    )
 
     try:
         import argcomplete
@@ -224,6 +230,7 @@ def main() -> None:
             proxy=args.proxy,
             include_filters=args.include,
             exclude_filters=args.exclude,
+            cookies=args.cookies,
         )
     except ValueError as exc:
         parser.error(str(exc))
