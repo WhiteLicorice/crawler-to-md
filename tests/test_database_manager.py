@@ -4,7 +4,7 @@ import tempfile
 from crawler_to_md.database_manager import DatabaseManager
 
 
-def test_database_operations():
+def test_database_operations() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = os.path.join(tmpdir, 'test.db')
         db = DatabaseManager(db_path)
@@ -23,9 +23,10 @@ def test_database_operations():
         db.insert_page('http://example.com', 'content', '{}')
         pages = db.get_all_pages()
         assert pages == [('http://example.com', 'content', '{}')]
+        db.conn.close()
 
 
-def test_insert_link_duplicates_and_list():
+def test_insert_link_duplicates_and_list() -> None:
     db = DatabaseManager(':memory:')
     assert db.insert_link('http://a') is True
     # duplicate single link should return False

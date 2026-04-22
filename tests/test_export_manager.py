@@ -1,12 +1,13 @@
 import json
 import os
 import tempfile
+from pathlib import Path
 
 from crawler_to_md.database_manager import DatabaseManager
 from crawler_to_md.export_manager import ExportManager
 
 
-def create_populated_db(tmpdir):
+def create_populated_db(tmpdir: str) -> DatabaseManager:
     db_path = os.path.join(tmpdir, 'db.sqlite')
     db = DatabaseManager(db_path)
     db.insert_link('http://example.com')
@@ -17,7 +18,7 @@ def create_populated_db(tmpdir):
     return db
 
 
-def test_export_markdown_and_json():
+def test_export_markdown_and_json() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         db = create_populated_db(tmpdir)
         exporter = ExportManager(db, title='My Title')
@@ -41,9 +42,10 @@ def test_export_markdown_and_json():
             assert data[0]['url'] == 'http://example.com'
             assert 'Title' in data[0]['content']
             assert data[0]['metadata']['author'] == 'John'
+        db.conn.close()
 
 
-def test_adjust_headers_and_cleanup():
+def test_adjust_headers_and_cleanup() -> None:
     db = DatabaseManager(':memory:')
     exporter = ExportManager(db, title='T')
     content = '# H1\n## H2'
@@ -54,7 +56,7 @@ def test_adjust_headers_and_cleanup():
     assert cleaned == 'A\n\nB'
 
 
-def test_concatenate_markdown_filters_metadata():
+def test_concatenate_markdown_filters_metadata() -> None:
     db = DatabaseManager(':memory:')
     db.insert_page('http://a', '# T1', json.dumps({'keep': 'x'}))
     db.insert_page('http://b', '# T2', json.dumps({'drop': None}))
@@ -66,7 +68,7 @@ def test_concatenate_markdown_filters_metadata():
     assert 'drop:' not in result
 
 
-def test_export_individual_markdown(tmp_path):
+def test_export_individual_markdown(tmp_path: Path) -> None:
     db_path = tmp_path / 'db.sqlite'
     db = DatabaseManager(str(db_path))
     db.insert_page('http://example.com/path/page', '# P', '{}')
@@ -75,9 +77,10 @@ def test_export_individual_markdown(tmp_path):
     expected = tmp_path / 'files' / 'example.com' / 'path' / 'page.md'
     assert expected.exists()
     assert output_folder == str(tmp_path / 'files')
+    db.conn.close()
 
 
-def test_adjust_headers_upper_limit():
+def test_adjust_headers_upper_limit() -> None:
     db = DatabaseManager(':memory:')
     exporter = ExportManager(db)
     content = '###### H6\n####### H7'
@@ -87,7 +90,7 @@ def test_adjust_headers_upper_limit():
     assert all(len(line.split()[0]) <= 6 for line in lines)
 
 
-def test_concatenate_skips_none_content():
+def test_concatenate_skips_none_content() -> None:
     db = DatabaseManager(':memory:')
     db.insert_page('http://a', None, '{}')
     db.insert_page('http://b', '# T', '{}')
@@ -97,7 +100,7 @@ def test_concatenate_skips_none_content():
     assert 'URL: http://b' in content
 
 
-def test_export_to_json_skips_none(tmp_path):
+def test_export_to_json_skips_none(tmp_path: Path) -> None:
     db = DatabaseManager(':memory:')
     db.insert_page('http://a', None, '{}')
     db.insert_page('http://b', '# T', '{}')
