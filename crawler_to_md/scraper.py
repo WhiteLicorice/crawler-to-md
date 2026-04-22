@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 import time
+import logging
 from urllib.parse import urldefrag, urljoin
 
 import requests
@@ -13,23 +14,34 @@ from tqdm import tqdm
 from . import log_setup
 from .database_manager import DatabaseManager
 
-logger = log_setup.get_logger()
+logger: logging.Logger = log_setup.get_logger()
 logger.name = "Scraper"
 
 
 class Scraper:
+    base_url: str
+    exclude_patterns: list[str]
+    include_url_patterns: list[str]
+    db_manager: DatabaseManager
+    rate_limit: int
+    delay: float
+    session: requests.Session
+    proxy: str | None
+    include_filters: list[str]
+    exclude_filters: list[str]
+
     def __init__(
         self,
-        base_url,
-        exclude_patterns,
-        include_url_patterns,
+        base_url: str,
+        exclude_patterns: list[str] | None,
+        include_url_patterns: list[str] | None,
         db_manager: DatabaseManager,
-        rate_limit=0,
-        delay=0,
-        proxy=None,
-        include_filters=None,
-        exclude_filters=None,
-    ):
+        rate_limit: int = 0,
+        delay: float = 0.0,
+        proxy: str | None = None,
+        include_filters: list[str] | None = None,
+        exclude_filters: list[str] | None = None,
+    ) -> None:
         """
         Initialize the Scraper object and log the initialization process.
 
@@ -67,7 +79,7 @@ class Scraper:
         if proxy:
             self._test_proxy()
 
-    def _test_proxy(self):
+    def _test_proxy(self) -> None:
         """
         Ensure the configured proxy is reachable.
 
@@ -79,7 +91,7 @@ class Scraper:
         except requests.RequestException as exc:
             raise ValueError(f"Proxy unreachable: {exc}") from exc
 
-    def _find_elements(self, soup: BeautifulSoup, selector: str):
+    def _find_elements(self, soup: BeautifulSoup, selector: str) -> list[Tag]:
         """
         Locate elements in the soup using a CSS-like selector.
 
@@ -97,7 +109,7 @@ class Scraper:
             return soup.find_all(class_=selector[1:])
         return soup.find_all(selector)
 
-    def is_valid_link(self, link):
+    def is_valid_link(self, link: str) -> bool:
         """
         Check if the given link is valid for scraping.
         Log the result of the validation.
@@ -121,7 +133,7 @@ class Scraper:
         logger.debug(f"Link validation for {link}: {valid}")
         return valid
 
-    def fetch_links(self, url, html=None):
+    def fetch_links(self, url: str, html: str | None = None) -> set[str]:
         """
         Fetch all valid links from the given URL.
         Log the fetching process and outcome.
@@ -131,7 +143,7 @@ class Scraper:
             html (str, optional): The HTML content of the page.
 
         Returns:
-            set: Set of valid links found on the page.
+            set[str]: Set of valid links found on the page.
         """
         logger.debug(f"Fetching links from {url}")
         try:
@@ -142,7 +154,7 @@ class Scraper:
                     logger.warning(
                         f"Failed to fetch {url} with status code {response.status_code}"
                     )
-                    return []
+                    return set()
                 else:
                     content = response.text
             else:
@@ -151,7 +163,7 @@ class Scraper:
             # Parse the content using BeautifulSoup
             soup = BeautifulSoup(content, "html.parser")
             # Extract all anchor tags and join the URLs
-            links = []
+            links: list[str] = []
             for a in soup.find_all("a", href=True):
                 if isinstance(a, Tag):
                     href = a.get("href")
@@ -171,9 +183,9 @@ class Scraper:
             return set(links)
         except requests.RequestException as e:
             logger.error(f"Error fetching {url}: {e}")
-            return []
+            return set()
 
-    def scrape_page(self, html, url):
+    def scrape_page(self, html: str, url: str) -> tuple[str | None, dict[str, str] | None]:
         """
         Scrape the content and metadata from the given URL.
         Log the scraping process and outcome.
@@ -244,7 +256,7 @@ class Scraper:
             logger.error(f"Error scraping {url}: {e}")
             return None, None
 
-    def start_scraping(self, url=None, urls_list=None):
+    def start_scraping(self, url: str | None = None, urls_list: list[str] | None = None) -> None:
         """
         Initiates the scraping process for a single URL or a list of URLs.
         It validates URLs, logs the scraping process, and manages the
