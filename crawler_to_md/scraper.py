@@ -297,9 +297,10 @@ class Scraper:
             filtered_html = str(soup)
             # Convert the HTML to Markdown
             with tempfile.NamedTemporaryFile(
-                mode="w+", delete=False, suffix=".html"
+                mode="w+", delete=False, suffix=".html", encoding="utf-8"
             ) as tmp:
                 tmp.write(filtered_html)
+                tmp.flush()
                 tmp_path = tmp.name
 
             markdown = str(MarkItDown().convert(tmp_path))
