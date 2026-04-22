@@ -3,6 +3,7 @@ import sqlite3
 import sys
 
 import pytest
+from pathlib import Path
 
 from crawler_to_md import cli, utils
 from crawler_to_md.database_manager import DatabaseManager
@@ -10,7 +11,7 @@ from crawler_to_md.export_manager import ExportManager
 from crawler_to_md.scraper import Scraper
 
 
-def _run_cli(monkeypatch, tmp_path, extra_args):
+def _run_cli(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, extra_args: list[str]) -> dict[str, bool]:
     calls = {"md": False, "json": False}
 
     def fake_export_markdown(self, path):
@@ -39,19 +40,19 @@ def _run_cli(monkeypatch, tmp_path, extra_args):
     return calls
 
 
-def test_cli_default_exports(monkeypatch, tmp_path):
+def test_cli_default_exports(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     calls = _run_cli(monkeypatch, tmp_path, [])
     assert calls["md"] is True
     assert calls["json"] is True
 
 
-def test_cli_disable_exports(monkeypatch, tmp_path):
+def test_cli_disable_exports(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     calls = _run_cli(monkeypatch, tmp_path, ["--no-markdown", "--no-json"])
     assert calls["md"] is False
     assert calls["json"] is False
 
 
-def test_cli_proxy_option(monkeypatch, tmp_path):
+def test_cli_proxy_option(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     captured = {}
 
     def fake_init(
@@ -96,7 +97,7 @@ def test_cli_proxy_option(monkeypatch, tmp_path):
     assert captured.get('proxy') == 'http://proxy:8080'
 
 
-def test_cli_proxy_short_option(monkeypatch, tmp_path):
+def test_cli_proxy_short_option(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     captured = {}
 
     def fake_init(
@@ -141,7 +142,7 @@ def test_cli_proxy_short_option(monkeypatch, tmp_path):
     assert captured.get('proxy') == 'http://proxy:8080'
 
 
-def test_cli_socks_proxy(monkeypatch, tmp_path):
+def test_cli_socks_proxy(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     captured = {}
 
     def fake_init(
@@ -186,7 +187,7 @@ def test_cli_socks_proxy(monkeypatch, tmp_path):
     assert captured.get('proxy') == 'socks5://localhost:9050'
 
 
-def test_cli_proxy_error(monkeypatch, tmp_path):
+def test_cli_proxy_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     def fake_init(*a, **k):
         raise ValueError('Proxy unreachable')
 
@@ -208,7 +209,7 @@ def test_cli_proxy_error(monkeypatch, tmp_path):
         cli.main()
 
 
-def test_cli_include_exclude_options(monkeypatch, tmp_path):
+def test_cli_include_exclude_options(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """
     Ensure CLI passes include and exclude options to the scraper.
 
@@ -265,7 +266,7 @@ def test_cli_include_exclude_options(monkeypatch, tmp_path):
     assert captured.get('exclude_filters') == ['.remove']
 
 
-def test_cli_include_exclude_short_options(monkeypatch, tmp_path):
+def test_cli_include_exclude_short_options(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """
     Ensure short CLI options map to include and exclude selectors.
 
@@ -322,7 +323,7 @@ def test_cli_include_exclude_short_options(monkeypatch, tmp_path):
     assert captured.get('exclude_filters') == ['span']
 
 
-def test_cli_include_url_option(monkeypatch, tmp_path):
+def test_cli_include_url_option(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """
     Ensure CLI passes include URL filters to the scraper.
 
@@ -374,7 +375,7 @@ def test_cli_include_url_option(monkeypatch, tmp_path):
     assert captured.get('include_url_patterns') == ['/blog']
 
 
-def test_cli_overwrite_cache(monkeypatch, tmp_path):
+def test_cli_overwrite_cache(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     captured = {}
 
     def fake_init(self, db_path):
@@ -407,7 +408,7 @@ def test_cli_overwrite_cache(monkeypatch, tmp_path):
     assert captured.get('exists') is False
 
 
-def test_cli_overwrite_cache_short_option(monkeypatch, tmp_path):
+def test_cli_overwrite_cache_short_option(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     captured = {}
 
     def fake_init(self, db_path):

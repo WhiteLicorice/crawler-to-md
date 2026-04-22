@@ -3,28 +3,28 @@ import pytest
 from crawler_to_md import utils
 
 
-def test_randomstring_to_filename():
+def test_randomstring_to_filename() -> None:
     assert utils.randomstring_to_filename('Hello World!') == 'Hello_World'
 
 
-def test_url_to_filename():
+def test_url_to_filename() -> None:
     result = utils.url_to_filename('https://example.com/path/index.html')
     assert result == 'example_com_path_index_html'
 
 
-def test_url_dirname():
+def test_url_dirname() -> None:
     assert utils.url_dirname('https://example.com/path/page') == 'https://example.com/path/'
     assert utils.url_dirname('https://example.com/path/page/') == 'https://example.com/path/page/'
 
 
-def test_deduplicate_list():
+def test_deduplicate_list() -> None:
     assert utils.deduplicate_list([1, 2, 2, 3, 1]) == [1, 2, 3]
 
 
-def test_randomstring_special_chars():
+def test_randomstring_special_chars() -> None:
     assert utils.randomstring_to_filename('a!@ b$c#') == 'a_bc'
 
 
-def test_url_to_filename_invalid():
+def test_url_to_filename_invalid() -> None:
     with pytest.raises(ValueError):
         utils.url_to_filename(123)

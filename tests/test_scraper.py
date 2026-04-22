@@ -9,23 +9,23 @@ from crawler_to_md.scraper import Scraper
 
 
 class DummyDB(DatabaseManager):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def __del__(self):
+    def __del__(self) -> None:
         pass
 
-    def insert_link(self, url, visited=False):
+    def insert_link(self, url: str | list[str], visited: bool = False) -> bool:
         return True
 
-    def get_unvisited_links(self):
+    def get_unvisited_links(self) -> list[tuple[str]]:
         return []
 
-    def mark_link_visited(self, url):
+    def mark_link_visited(self, url: str) -> None:
         pass
 
 
-def test_is_valid_link():
+def test_is_valid_link() -> None:
     db = DummyDB()
     scraper = Scraper(
         base_url='https://example.com',
@@ -47,7 +47,7 @@ def test_is_valid_link():
     assert not include_scraper.is_valid_link('https://example.com/blog')
 
 
-def test_fetch_links():
+def test_fetch_links() -> None:
     db = DummyDB()
     scraper = Scraper(
         base_url='https://example.com',
@@ -64,7 +64,7 @@ def test_fetch_links():
     assert links == {'https://example.com/page1', 'https://example.com/page2'}
 
 
-def test_fetch_links_includes_only_matching_patterns():
+def test_fetch_links_includes_only_matching_patterns() -> None:
     db = DummyDB()
     scraper = Scraper(
         base_url='https://example.com',
@@ -85,7 +85,7 @@ def test_fetch_links_includes_only_matching_patterns():
 
 @patch('os.remove')
 @patch('tempfile.NamedTemporaryFile')
-def test_scrape_page_parses_content_and_metadata(mock_tempfile, mock_os_remove):
+def test_scrape_page_parses_content_and_metadata(mock_tempfile: MagicMock, mock_os_remove: MagicMock) -> None:
     # Arrange
     mock_file = MagicMock()
     mock_file.name = "dummy_path"
@@ -113,7 +113,7 @@ def test_scrape_page_parses_content_and_metadata(mock_tempfile, mock_os_remove):
 
 @patch('os.remove')
 @patch('tempfile.NamedTemporaryFile')
-def test_scrape_page_with_markitdown(mock_tempfile, mock_os_remove):
+def test_scrape_page_with_markitdown(mock_tempfile: MagicMock, mock_os_remove: MagicMock) -> None:
     # Arrange
     mock_file = MagicMock()
     mock_file.name = "dummy_path"
@@ -147,7 +147,7 @@ def test_scrape_page_with_markitdown(mock_tempfile, mock_os_remove):
 
 @patch('os.remove')
 @patch('tempfile.NamedTemporaryFile')
-def test_scrape_page_include_exclude(mock_tempfile, mock_os_remove):
+def test_scrape_page_include_exclude(mock_tempfile: MagicMock, mock_os_remove: MagicMock) -> None:
     """
     Verify include and exclude selectors filter HTML before conversion.
 
@@ -189,12 +189,12 @@ def test_scrape_page_include_exclude(mock_tempfile, mock_os_remove):
 
 
 class ListDB(DummyDB):
-    def __init__(self):
-        self.links = []
-        self.visited = set()
-        self.pages = []
+    def __init__(self) -> None:
+        self.links: list[str] = []
+        self.visited: set[str] = set()
+        self.pages: list[tuple[str, str | None, str | None]] = []
 
-    def insert_link(self, url, visited=False):
+    def insert_link(self, url: str | list[str], visited: bool = False) -> bool:
         urls = url if isinstance(url, list) else [url]
         inserted = False
         for u in urls:
@@ -203,26 +203,26 @@ class ListDB(DummyDB):
                 inserted = True
         return inserted
 
-    def get_unvisited_links(self):
+    def get_unvisited_links(self) -> list[tuple[str]]:
         return [(u,) for u in self.links if u not in self.visited]
 
-    def mark_link_visited(self, url):
+    def mark_link_visited(self, url: str) -> None:
         self.visited.add(url)
 
-    def get_links_count(self):
+    def get_links_count(self) -> int:
         return len(self.links)
 
-    def get_visited_links_count(self):
+    def get_visited_links_count(self) -> int:
         return len(self.visited)
 
-    def insert_page(self, url, content, metadata):
+    def insert_page(self, url: str, content: str | None, metadata: str | None) -> None:
         self.pages.append((url, content, metadata))
 
-    def get_all_pages(self):
+    def get_all_pages(self) -> list[tuple[str, str | None, str | None]]:
         return self.pages
 
 
-def test_start_scraping_process(monkeypatch):
+def test_start_scraping_process(monkeypatch: pytest.MonkeyPatch) -> None:
     db = ListDB()
     scraper = Scraper(
         base_url='http://example.com',
@@ -263,7 +263,7 @@ def test_start_scraping_process(monkeypatch):
     assert db.pages[0][0] == 'http://example.com/page'
 
 
-def test_scraper_proxy_initialization(monkeypatch):
+def test_scraper_proxy_initialization(monkeypatch: pytest.MonkeyPatch) -> None:
     db = DummyDB()
     monkeypatch.setattr(Scraper, '_test_proxy', lambda self: None)
     scraper = Scraper(
@@ -277,7 +277,7 @@ def test_scraper_proxy_initialization(monkeypatch):
     assert scraper.session.proxies.get('https') == 'http://proxy:8080'
 
 
-def test_scraper_socks_proxy_initialization(monkeypatch):
+def test_scraper_socks_proxy_initialization(monkeypatch: pytest.MonkeyPatch) -> None:
     db = DummyDB()
     proxy = 'socks5://localhost:9050'
     monkeypatch.setattr(Scraper, '_test_proxy', lambda self: None)
@@ -292,7 +292,7 @@ def test_scraper_socks_proxy_initialization(monkeypatch):
     assert scraper.session.proxies.get('https') == proxy
 
 
-def test_scraper_proxy_failure_detection(monkeypatch):
+def test_scraper_proxy_failure_detection(monkeypatch: pytest.MonkeyPatch) -> None:
     db = DummyDB()
     def fake_head(self, url, timeout=5):
         raise requests.exceptions.ProxyError("fail")
@@ -308,7 +308,7 @@ def test_scraper_proxy_failure_detection(monkeypatch):
         )
 
 
-def test_scrape_page_returns_none_for_empty_content(monkeypatch):
+def test_scrape_page_returns_none_for_empty_content(monkeypatch: pytest.MonkeyPatch) -> None:
     db = DummyDB()
     scraper = Scraper(
         base_url='http://example.com',
@@ -326,7 +326,7 @@ def test_scrape_page_returns_none_for_empty_content(monkeypatch):
     assert metadata is None
 
 
-def test_start_scraping_excludes_invalid_urls(monkeypatch):
+def test_start_scraping_excludes_invalid_urls(monkeypatch: pytest.MonkeyPatch) -> None:
     db = ListDB()
     scraper = Scraper(
         base_url='http://example.com',
@@ -371,7 +371,7 @@ def test_start_scraping_excludes_invalid_urls(monkeypatch):
     assert 'http://example.com/exclude/page' not in db.links
 
 
-def test_start_scraping_filters_discovered_links(monkeypatch):
+def test_start_scraping_filters_discovered_links(monkeypatch: pytest.MonkeyPatch) -> None:
     db = ListDB()
     scraper = Scraper(
         base_url='http://example.com',
