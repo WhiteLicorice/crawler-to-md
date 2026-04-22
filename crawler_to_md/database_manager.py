@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseManager:
-    def __init__(self, db_path):
+    def __init__(self, db_path: str) -> None:
         """
         Initialize the DatabaseManager object with the database path and create tables.
 
@@ -16,7 +16,7 @@ class DatabaseManager:
         self.conn = sqlite3.connect(db_path)
         self.create_tables()
 
-    def create_tables(self):
+    def create_tables(self) -> None:
         """
         Create tables 'pages' and 'links' if they do not exist in the database.
         """
@@ -34,7 +34,7 @@ class DatabaseManager:
                           visited BOOLEAN)"""
             )
 
-    def insert_page(self, url, content, metadata):
+    def insert_page(self, url: str, content: str | None, metadata: str | None) -> None:
         """
         Insert a new page into the 'pages' table.
 
@@ -50,7 +50,7 @@ class DatabaseManager:
                 (url, content, metadata),
             )
 
-    def insert_link(self, url, visited=False):
+    def insert_link(self, url: str | list[str], visited: bool = False) -> bool:
         """
         Insert a new link into the 'links' table if it does not exist.
 
@@ -81,7 +81,7 @@ class DatabaseManager:
 
             return count > 0
 
-    def mark_link_visited(self, url):
+    def mark_link_visited(self, url: str) -> None:
         """
         Mark a link as visited in the 'links' table.
 
@@ -92,7 +92,7 @@ class DatabaseManager:
             logger.debug(f"Marking link as visited with URL: {url}")
             self.conn.execute("UPDATE links SET visited = TRUE WHERE url = ?", (url,))
 
-    def get_unvisited_links(self):
+    def get_unvisited_links(self) -> list[tuple[str]]:
         """
         Retrieve all unvisited links from the 'links' table.
 
@@ -104,7 +104,7 @@ class DatabaseManager:
             cursor = self.conn.execute("SELECT url FROM links WHERE visited = FALSE")
             return cursor.fetchall()
 
-    def get_links_count(self):
+    def get_links_count(self) -> int:
         """
         Retrieve the total number of links in the 'links' table.
 
@@ -116,7 +116,7 @@ class DatabaseManager:
             cursor = self.conn.execute("SELECT COUNT(*) FROM links")
             return cursor.fetchone()[0]
 
-    def get_visited_links_count(self):
+    def get_visited_links_count(self) -> int:
         """
         Retrieve the total number of visited links in the 'links' table.
 
@@ -130,7 +130,7 @@ class DatabaseManager:
             )
             return cursor.fetchone()[0]
 
-    def get_all_pages(self):
+    def get_all_pages(self) -> list[tuple[str, str | None, str | None]]:
         """
         Retrieve all pages from the 'pages' table.
 
@@ -142,7 +142,7 @@ class DatabaseManager:
             cursor = self.conn.execute("SELECT url, content, metadata FROM pages")
             return cursor.fetchall()
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Close the database connection when the object is deleted.
         """

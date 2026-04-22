@@ -6,7 +6,7 @@ logger = log_setup.get_logger()
 logger.name = "utils"
 
 
-def randomstring_to_filename(random_string):
+def randomstring_to_filename(random_string: str) -> str:
     """
     Convert a random string to a valid filename.
 
@@ -26,7 +26,7 @@ def randomstring_to_filename(random_string):
     return filename
 
 
-def url_to_filename(url):
+def url_to_filename(url: str) -> str:
     """
     Convert a URL to a valid filename, ensuring it is a string type to avoid TypeError.
 
@@ -54,7 +54,7 @@ def url_to_filename(url):
     return filename
 
 
-def url_dirname(url):
+def url_dirname(url: str) -> str:
     """
     Extracts the directory name from the URL.
 
@@ -90,7 +90,7 @@ def url_dirname(url):
 
 
 # Start Generation Here
-def deduplicate_list(input_list):
+def deduplicate_list(input_list: list[str]) -> list[str]:
     """
     Deduplicates a list while preserving the original order of elements.
 

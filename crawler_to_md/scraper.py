@@ -3,7 +3,6 @@ import json
 import os
 import tempfile
 import time
-import logging
 from urllib.parse import urldefrag, urljoin
 
 import requests
@@ -14,7 +13,7 @@ from tqdm import tqdm
 from . import log_setup
 from .database_manager import DatabaseManager
 
-logger: logging.Logger = log_setup.get_logger()
+logger = log_setup.get_logger()
 logger.name = "Scraper"
 
 

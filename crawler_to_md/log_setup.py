@@ -13,7 +13,7 @@ class TqdmHandler(logging.StreamHandler):
     This handler allows log messages to be displayed over tqdm progress bars without
     interrupting them.
     """
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         """
         Emit a log record.
 
@@ -32,7 +32,7 @@ class TqdmHandler(logging.StreamHandler):
             # Handle any errors that occur during logging
             self.handleError(record)
 
-def setup_logging(log_level: str = "WARN"):
+def setup_logging(log_level: str = "WARN") -> None:
     """
     Sets up logging with a custom handler and formatter.
 
@@ -67,7 +67,7 @@ def setup_logging(log_level: str = "WARN"):
     # Install coloredlogs with the specified log level and logger
     coloredlogs.install(level=log_level, logger=logger)
 
-def get_logger():
+def get_logger() -> logging.Logger:
     """
     Returns the global logger instance.
 

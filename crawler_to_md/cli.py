@@ -17,7 +17,7 @@ logger = log_setup.get_logger()
 logger.name = "main"
 
 
-def main():
+def main() -> None:
     """
     Main function to start the web scraper application.
 

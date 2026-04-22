@@ -9,7 +9,7 @@ logger.name = "export_manager"
 
 
 class ExportManager:
-    def __init__(self, db_manager: DatabaseManager, title=None):
+    def __init__(self, db_manager: DatabaseManager, title: str | None = None) -> None:
         """
         Initialize the ExportManager with a DatabaseManager instance.
 
@@ -20,7 +20,7 @@ class ExportManager:
         self.title = title
         logger.info("ExportManager initialized.")  # Add log message
 
-    def _adjust_headers(self, content, level_increment=1):
+    def _adjust_headers(self, content: str, level_increment: int = 1) -> str:
         """
         Adjust the header levels in the Markdown content.
         The goal is to transform the Markdown content to remain semantically
@@ -42,7 +42,7 @@ class ExportManager:
             new_content += line + "\n"
         return new_content
 
-    def _cleanup_markdown(self, content):
+    def _cleanup_markdown(self, content: str) -> str:
         """
         Remove excessive newline characters from Markdown content.
 
@@ -60,7 +60,7 @@ class ExportManager:
             content = content.replace("\n\n\n", "\n\n")
         return content
 
-    def _concatenate_markdown(self, pages):
+    def _concatenate_markdown(self, pages: list[tuple[str, str | None, str | None]]) -> str:
         """
         Concatenate a list of Markdown files into one, with header adjustments.
 
@@ -97,7 +97,7 @@ class ExportManager:
 
         return final_content
 
-    def export_to_markdown(self, output_path):
+    def export_to_markdown(self, output_path: str) -> None:
         """
         Export the pages to a markdown file.
 
@@ -109,7 +109,7 @@ class ExportManager:
             md_file.write(self._concatenate_markdown(pages))
         logger.info(f"Exported pages to markdown file: {output_path}")
 
-    def export_to_json(self, output_path):
+    def export_to_json(self, output_path: str) -> None:
         """
         Export the pages to a JSON file.
 
@@ -136,7 +136,7 @@ class ExportManager:
             # Log the successful export to JSON file
             logger.info(f"Exported pages to JSON file: {output_path}")
 
-    def export_individual_markdown(self, output_folder, base_url=None):
+    def export_individual_markdown(self, output_folder: str, base_url: str | None = None) -> str:
         """
         Export each page individually as Markdown, preserving the URL's structure.
 
